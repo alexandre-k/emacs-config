@@ -1,3 +1,5 @@
+;;; Packages --- Summary
+
 (setq inhibit-startup-message t)
 (tool-bar-mode -1)
 (menu-bar-mode -1)
@@ -6,8 +8,11 @@
 (global-hl-line-mode t)
 (global-set-key (kbd "M-=") 'count-words)
 (linum-mode t)
+(global-auto-revert-mode 1)
+;; auto refresh dired when file changes
+(add-hook 'dired-mode-hook 'auto-revert-mode)
 (setq make-backup-files nil)
-(setq auto-save-default nil) 
+(setq auto-save-default nil)
 
 
 (require 'package)
@@ -19,10 +24,6 @@
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
-
-(use-package try
-  :ensure t)
-
 (use-package which-key
   :ensure t
   :config (which-key-mode))
@@ -32,22 +33,23 @@
   :config
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
-(setq indo-enable-flex-matching t)
+(setq ido-enable-flex-matching t)
 (setq ido-everywhere t)
 (ido-mode 1)
 
 (defalias 'list-buffers 'ibuffer)
 
-(use-package ace-window
-  :ensure t
-  :init
+(use-package ace-window :ensure t :init
   (progn
-    (global-set-key [remap other-window] 'ace-window)
-    ))
+    (global-set-key [remap other-window] 'ace-window)))
 
-(use-package counsel
-  :ensure t
-  )
+(use-package company :ensure t)
+(add-hook 'after-init-hook 'global-company-mode)
+(setq company-tooltip-align-annotations t)
+(add-hook 'prog-mode-hook 'company-mode)
+(provide 'init-company-mode)
+
+(use-package counsel :ensure t)
 
 (use-package swiper
   :ensure t
@@ -73,17 +75,11 @@
   :ensure t
   :bind ("M-s" . avy-goto-char-2))
 
-(use-package auto-complete
-  :ensure t
-  :init
-  (progn
-    (ac-config-default)
-    (global-auto-complete-mode t)
-    ))
 
-(use-package spacemacs-theme
-  :ensure t
-  :config (load-theme 'spacemacs-dark))
+(use-package spacemacs-common
+    :ensure spacemacs-theme
+    :config (load-theme 'spacemacs-dark t))
+
 
 (use-package ox-reveal
   :ensure ox-reveal)
@@ -91,17 +87,12 @@
 (setq org-reveal-mathjax t)
 (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0")
 
-;; (use-package powerline
-;;   :ensure t)
-;; (powerline-center-evil-theme)
-(use-package spaceline
-  :demand t
-  :init
-  (setq powerline-default-separator 'arrow-fade)
-  :config
-  (require 'spaceline-config)
-  (spaceline-spacemacs-theme))
+(use-package ocodo-svg-modelines
+  :ensure t)
 
+(use-package svg-mode-line-themes)
+(smt/enable)
+(smt/set-theme 'default)
 
 (use-package evil
   :ensure t)
@@ -117,46 +108,14 @@
   :init
   (global-flycheck-mode t))
 
-(defun flycheck-python-setup ()
-  (flycheck-mode))
-(add-hook 'python-mode-hook #'flycheck-python-setup)
-
-(use-package jedi
-  :ensure t
-  :init
-  (add-hook 'python-mode-hook 'jedi:setup)
-  (add-hook 'python-mode-hook 'jedi:ac-setup))
+(use-package flycheck-inline
+  :ensure t)
+(with-eval-after-load 'flycheck
+  (flycheck-inline-mode))
 
 (use-package ace-popup-menu
   :ensure t)
 (ace-popup-menu-mode 1)
-
-(use-package elpy
-  :ensure t)
-(elpy-enable)
-
-(use-package haskell-mode
-  :ensure t)
-
-(defun haskell-evil-open-above ()
-  (interactive)
-  (evil-digit-argument-or-evil-beginning-of-line)
-  (haskell-indentation-newline-and-indent)
-  (evil-previous-line)
-  (haskell-indentation-indent-line)
-  (evil-append-line nil))
-
-(defun haskell-evil-open-below ()
-  (interactive)
-  (evil-append-line nil)
-  (haskell-indentation-newline-and-indent))
-
-(evil-define-key 'normal haskell-mode-map
-  "o" 'haskell-evil-open-below
-  "O" 'haskell-evil-open-above)
-
-(use-package ghc-mode
-  :ensure t)
 
 (use-package markdown-mode
   :ensure t
@@ -165,12 +124,6 @@
          ("\\.md\\'" . markdown-mode)
          ("\\.markdown\\'" . markdown-mode))
   :init (setq markdown-command "multimarkdown"))
-
-(use-package clojure-mode
-  :ensure t)
-
-(use-package cider
-  :ensure t)
 
 (use-package yasnippet
   :ensure t
@@ -218,23 +171,171 @@
 (use-package skewer-mode
   :ensure t)
 
-(use-package simple-httpd
-  :ensure t)
-
 (use-package csv-mode
   :ensure t)
 
 (use-package col-highlight
   :ensure t)
 
-(use-package rjsx-mode
+(use-package rust-mode
   :ensure t)
-(add-to-list 'auto-mode-alist '(".*\.js'" . rjsx-mode))
-(add-hook 'rjsx-mode-hook
-	  (lambda ()
-	    (setq indent-tabs-mode nil)
-	    (setq js-indent-level 2)
-	    (setq js2-strict-missing-semi-warning nil)))
+
+(use-package cargo
+  :ensure t)
+(add-hook 'rust-mode-hook 'cargo-minor-mode)
+
+(use-package racer
+  :ensure t)
+
+(setq racer-cmd (concat (getenv "HOME") "/.cargo/bin/racer"))
+(setenv "RUST_SRC_PATH"
+	(concat (getenv "HOME")
+		"/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/src"))
+(setq racer-rust-src-path (getenv "RUST_SRC_PATH"))
+
+(add-hook 'rust-mode-hook #'racer-mode)
+(add-hook 'racer-mode-hook #'eldoc-mode)
+(add-hook 'racer-mode-hook  #'company-mode)
+
+(use-package flycheck-rust
+  :ensure t)
+(with-eval-after-load 'rust-mode
+  (add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
+
+(define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
+
+(add-hook 'rust-mode-hook
+          '(lambda ()
+             (local-set-key (kbd "TAB") #'company-indent-or-complete-common)
+	     (electric-pair-mode 1)))
+(setq rust-format-on-save t)
+
+
+
+;; (use-package try
+;;   :ensure t)
+
+;; (use-package auto-complete
+;;   :ensure t
+;;   :init
+;;   (progn
+;;     (ac-config-default)
+;;     (global-auto-complete-mode t)
+;;     ))
+
+;; (use-package haskell-mode
+;;   :ensure t)
+
+;; (defun haskell-evil-open-above ()
+;;   (interactive)
+;;   (evil-digit-argument-or-evil-beginning-of-line)
+;;   (haskell-indentation-newline-and-indent)
+;;   (evil-previous-line)
+;;   (haskell-indentation-indent-line)
+;;   (evil-append-line nil))
+
+;; (defun haskell-evil-open-below ()
+;;   (interactive)
+;;   (evil-append-line nil)
+;;   (haskell-indentation-newline-and-indent))
+
+;; (evil-define-key 'normal haskell-mode-map
+;;   "o" 'haskell-evil-open-below
+;;   "O" 'haskell-evil-open-above)
+
+;; (use-package ghc-mode
+;;   :ensure t)
+
+;; (use-package clojure-mode
+;;   :ensure t)
+
+;; (use-package cider
+;;   :ensure t)
+
+;; (use-package simple-httpd
+;;   :ensure t)
+
+
+;; (defun flycheck-python-setup ()
+;;   (flycheck-mode))
+;; (add-hook 'python-mode-hook #'flycheck-python-setup)
+
+;; (use-package jedi
+;;   :ensure t
+;;   :init
+;;   (add-hook 'python-mode-hook 'jedi:setup)
+;;   (add-hook 'python-mode-hook 'jedi:ac-setup))
+
+;; (use-package elpy
+;;   :ensure t)
+;; (elpy-enable)
+
+;; (use-package rjsx-mode
+;;   :ensure t)
+;; ;; (add-to-list 'auto-mode-alist '("\\.js\\" . rjsx-mode))
+;; ;; (add-to-list 'auto-mode-alist '("\\.jsx\\" . rjsx-mode))
+;; (add-hook 'rjsx-mode-hook
+;; 	  (lambda ()
+;; 	    (setq indent-tabs-mode nil)
+;; 	    (setq js-indent-level 2)
+;; 	    (setq js2-strict-missing-semi-warning nil)))
+
+;; (use-package tern
+;;   :ensure t)
+;; (use-package tern-auto-complete
+;;   :ensure t)
+;; (add-hook 'js-mode-hook (lambda () (tern-mode t)))
+;; (eval-after-load 'tern
+;;    '(progn
+;;       (require 'tern-auto-complete)
+;;       (tern-ac-setup)))
+
+;; (use-package eclim
+;;   :ensure t)
+;; (global-eclim-mode)
+;; regular auto-complete initialization
+
+;; add the emacs-eclim source
+;; (use-package ac-emacs-eclim-source
+;;   :ensure t)
+;; (ac-emacs-eclim-config)
+
+;; (use-package elm-mode
+;;   :ensure t)
+
+;; *********************** OCaml dev ********************************************
+;; (add-to-list 'auto-mode-alist '("\\.ml[iylp]?" . tuareg-mode))
+;; (autoload 'tuareg-mode "tuareg" "Major mode for editing OCaml code" t)
+;; (autoload 'tuareg-run-ocaml "tuareg" "Run an inferior OCaml process." t)
+;; (autoload 'ocamldebug "ocamldebug" "Run the OCaml debugger" t)
+
+;; (use-package ocp-indent
+;;   :ensure t)
+
+;; (use-package merlin
+;;   :ensure t)
+
+;; ******************************************************************************
+
+;; ****************** Typescript dev ********************************************
+
+;; (use-package typescript-mode
+;;   :ensure t)
+;; (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-mode))
+
+;; (use-package tide
+;;   :ensure t)
+;; (add-hook 'typescript-mode-hook
+;;           (lambda ()
+;;             (tide-setup)
+;;             (flycheck-mode t)
+;;             (setq flycheck-check-syntax-automatically '(save mode-enabled))
+;;             (eldoc-mode t)
+;;             (company-mode-on)))
+
+;; ******************************************************************************
+
+
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -251,7 +352,7 @@
     ("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" default)))
  '(package-selected-packages
    (quote
-    (evil-surround rjsx-mode col-highlight-flash col-highlight ghc-mode skewer-mode magit evil-iedit-state iedit expand-region hungry-delete beacon cider clojure-mode elpy ace-popup-menu hydra powerline flycheck-coala flycheck mode-line ox-reveal spacemacs-theme color-theme auto-complete counsel ace-window org-bullets which-key try use-package))))
+    (ocodo-svg-modelines flycheck-inline racer company-mode cargo cargo-mode flycheck-rust rust-mode rust tide typescript-mode merlin ocp-indent elm-mode go-mode ac-emacs-eclim-source eclimd eclim meghanada tern-auto-complete tern evil-surround rjsx-mode col-highlight-flash col-highlight ghc-mode skewer-mode magit evil-iedit-state iedit expand-region hungry-delete beacon cider clojure-mode elpy ace-popup-menu hydra powerline flycheck-coala flycheck mode-line ox-reveal spacemacs-theme color-theme auto-complete counsel ace-window org-bullets which-key try use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
