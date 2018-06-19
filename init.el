@@ -13,6 +13,10 @@
 (add-hook 'dired-mode-hook 'auto-revert-mode)
 (setq make-backup-files nil)
 (setq auto-save-default nil)
+(setq column-number-mode t)
+(setq show-trailing-whitespace t)
+(blink-cursor-mode 0)
+
 
 
 (require 'package)
@@ -48,6 +52,8 @@
 (setq company-tooltip-align-annotations t)
 (add-hook 'prog-mode-hook 'company-mode)
 (provide 'init-company-mode)
+(use-package company-quickhelp :ensure t)
+(setq company-quickhelp-mode t)
 
 (use-package counsel :ensure t)
 
@@ -159,14 +165,14 @@
 (use-package magit
   :ensure t)
 
-(use-package indium
+(use-package rainbow-delimiters
   :ensure t)
+(add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
-(use-package js2-mode
-  :ensure t
-  :mode ("\\.js$" . js2-mode)
-  :interpreter ("node" . js2-mode))
-(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+(use-package smartparens
+  :ensure t)
+(require 'smartparens-config)
+(add-hook 'prog-mode-hook #'smartparens-mode)
 
 (use-package skewer-mode
   :ensure t)
@@ -174,8 +180,14 @@
 (use-package csv-mode
   :ensure t)
 
-(use-package col-highlight
+(use-package json-mode
   :ensure t)
+
+(use-package yaml-mode
+  :ensure t)
+
+
+;; ******************** Rust ****************************************************
 
 (use-package rust-mode
   :ensure t)
@@ -210,6 +222,20 @@
 	     (electric-pair-mode 1)))
 (setq rust-format-on-save t)
 
+(use-package toml-mode
+  :ensure t)
+
+;; ******************************************************************************
+
+
+;; (use-package indium
+;;   :ensure t)
+
+;; (use-package js2-mode
+;;   :ensure t
+;;   :mode ("\\.js$" . js2-mode)
+;;   :interpreter ("node" . js2-mode))
+;; (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 
 
 ;; (use-package try
@@ -352,7 +378,7 @@
     ("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" default)))
  '(package-selected-packages
    (quote
-    (ocodo-svg-modelines flycheck-inline racer company-mode cargo cargo-mode flycheck-rust rust-mode rust tide typescript-mode merlin ocp-indent elm-mode go-mode ac-emacs-eclim-source eclimd eclim meghanada tern-auto-complete tern evil-surround rjsx-mode col-highlight-flash col-highlight ghc-mode skewer-mode magit evil-iedit-state iedit expand-region hungry-delete beacon cider clojure-mode elpy ace-popup-menu hydra powerline flycheck-coala flycheck mode-line ox-reveal spacemacs-theme color-theme auto-complete counsel ace-window org-bullets which-key try use-package))))
+    (json-mode yaml-mode smartparens rainbow-delimiters company-quickhelp toml-mode ocodo-svg-modelines flycheck-inline racer company-mode cargo cargo-mode flycheck-rust rust-mode rust tide typescript-mode merlin ocp-indent elm-mode go-mode ac-emacs-eclim-source eclimd eclim meghanada tern-auto-complete tern evil-surround rjsx-mode ghc-mode skewer-mode magit evil-iedit-state iedit expand-region hungry-delete beacon cider clojure-mode elpy ace-popup-menu hydra powerline flycheck-coala flycheck mode-line ox-reveal spacemacs-theme color-theme auto-complete counsel ace-window org-bullets which-key try use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
