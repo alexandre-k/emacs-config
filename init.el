@@ -15,9 +15,9 @@
 (setq auto-save-default nil)
 (setq column-number-mode t)
 (setq show-trailing-whitespace t)
+(setq-default indent-tabs-mode nil)
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
 (blink-cursor-mode 0)
-
-
 
 (require 'package)
 (setq package-enable-at-startup nil)
@@ -81,17 +81,9 @@
   :ensure t
   :bind ("M-s" . avy-goto-char-2))
 
-
 (use-package spacemacs-common
     :ensure spacemacs-theme
     :config (load-theme 'spacemacs-dark t))
-
-
-(use-package ox-reveal
-  :ensure ox-reveal)
-
-(setq org-reveal-mathjax t)
-(setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0")
 
 (use-package ocodo-svg-modelines
   :ensure t)
@@ -225,29 +217,73 @@
 (use-package toml-mode
   :ensure t)
 
+
+;; ******************** Python ****************************************************
+
+(use-package elpy
+  :ensure t)
+(elpy-enable)
+
+
+;; ******************** Javascript ****************************************************
+
+(use-package js2-mode
+  :ensure t
+  :mode ("\\.js$" . js2-mode)
+  :interpreter ("node" . js2-mode))
+(add-hook 'js2-mode-hook #'js2-imenu-extras-mode)
+(setq js-indent-level 2)
+
+(use-package xref-js2
+  :ensure t)
+;; js-mode (which js2 is based on) binds "M-." which conflicts with xref, so
+;; unbind it.
+(define-key js-mode-map (kbd "M-.") nil)
+
+(add-hook 'js2-mode-hook (lambda ()
+  (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t)))
+
+(use-package company-tern
+  :ensure t)
+(add-to-list 'company-backends 'company-tern)
+(add-hook 'js2-mode-hook (lambda ()
+                           (tern-mode)
+                           (company-mode)))
+(define-key tern-mode-keymap (kbd "M-.") nil)
+(define-key tern-mode-keymap (kbd "M-,") nil)
+
+
+;; ****************** Typescript dev ********************************************
+
+(use-package typescript-mode
+  :ensure t)
+(add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-mode))
+
+;; (use-package tide
+;;   :ensure t)
+;; (add-hook 'typescript-mode-hook
+;;           (lambda ()
+;;             (tide-setup)
+;;             (flycheck-mode t)
+;;             (setq flycheck-check-syntax-automatically '(save mode-enabled))
+;;             (eldoc-mode t)
+;;             (company-mode-on)))
+
+;; ******************************************************************************
+
+
+;
 ;; ******************************************************************************
 
 
 ;; (use-package indium
 ;;   :ensure t)
 
-;; (use-package js2-mode
-;;   :ensure t
-;;   :mode ("\\.js$" . js2-mode)
-;;   :interpreter ("node" . js2-mode))
 ;; (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 
 
 ;; (use-package try
 ;;   :ensure t)
-
-;; (use-package auto-complete
-;;   :ensure t
-;;   :init
-;;   (progn
-;;     (ac-config-default)
-;;     (global-auto-complete-mode t)
-;;     ))
 
 ;; (use-package haskell-mode
 ;;   :ensure t)
@@ -292,29 +328,14 @@
 ;;   (add-hook 'python-mode-hook 'jedi:setup)
 ;;   (add-hook 'python-mode-hook 'jedi:ac-setup))
 
-;; (use-package elpy
-;;   :ensure t)
-;; (elpy-enable)
-
 ;; (use-package rjsx-mode
 ;;   :ensure t)
 ;; ;; (add-to-list 'auto-mode-alist '("\\.js\\" . rjsx-mode))
 ;; ;; (add-to-list 'auto-mode-alist '("\\.jsx\\" . rjsx-mode))
 ;; (add-hook 'rjsx-mode-hook
 ;; 	  (lambda ()
-;; 	    (setq indent-tabs-mode nil)
 ;; 	    (setq js-indent-level 2)
 ;; 	    (setq js2-strict-missing-semi-warning nil)))
-
-;; (use-package tern
-;;   :ensure t)
-;; (use-package tern-auto-complete
-;;   :ensure t)
-;; (add-hook 'js-mode-hook (lambda () (tern-mode t)))
-;; (eval-after-load 'tern
-;;    '(progn
-;;       (require 'tern-auto-complete)
-;;       (tern-ac-setup)))
 
 ;; (use-package eclim
 ;;   :ensure t)
@@ -329,6 +350,18 @@
 ;; (use-package elm-mode
 ;;   :ensure t)
 
+
+;; (use-package ox-reveal
+;;   :ensure ox-reveal)
+
+;; (setq org-reveal-mathjax t)
+;; (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0")
+
+;; (use-package kaolin-themes
+;;   :ensure t)
+;; (load-theme 'kaolin-valley-dark)
+
+
 ;; *********************** OCaml dev ********************************************
 ;; (add-to-list 'auto-mode-alist '("\\.ml[iylp]?" . tuareg-mode))
 ;; (autoload 'tuareg-mode "tuareg" "Major mode for editing OCaml code" t)
@@ -340,24 +373,6 @@
 
 ;; (use-package merlin
 ;;   :ensure t)
-
-;; ******************************************************************************
-
-;; ****************** Typescript dev ********************************************
-
-;; (use-package typescript-mode
-;;   :ensure t)
-;; (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-mode))
-
-;; (use-package tide
-;;   :ensure t)
-;; (add-hook 'typescript-mode-hook
-;;           (lambda ()
-;;             (tide-setup)
-;;             (flycheck-mode t)
-;;             (setq flycheck-check-syntax-automatically '(save mode-enabled))
-;;             (eldoc-mode t)
-;;             (company-mode-on)))
 
 ;; ******************************************************************************
 
@@ -375,10 +390,10 @@
  '(custom-enabled-themes (quote (spacemacs-dark)))
  '(custom-safe-themes
    (quote
-    ("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" default)))
+    ("b7d967c53f4e3dfc1f847824ffa3f902de44d3a99b12ea110e0ec2fcec24501d" "4455435a66dba6e81d55a843c9c7e475a7a935271bf63a1dfe9f01ed2a4d7572" "9076ed00a3413143191cb9324d9426df38d83fb6dba595afbd43983db1015ef4" "7e362b29da8aa9447b51c2b354d8df439db33b3612ddd5baa34ad3de32206d83" "c4d3cbd4f404508849e4e902ede83a4cb267f8dff527da3e42b8103ec8482008" "f72ccaa311763cb943de5f9f56a0d53b0009b772f4d05f47835aa08011797aa8" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" default)))
  '(package-selected-packages
    (quote
-    (json-mode yaml-mode smartparens rainbow-delimiters company-quickhelp toml-mode ocodo-svg-modelines flycheck-inline racer company-mode cargo cargo-mode flycheck-rust rust-mode rust tide typescript-mode merlin ocp-indent elm-mode go-mode ac-emacs-eclim-source eclimd eclim meghanada tern-auto-complete tern evil-surround rjsx-mode ghc-mode skewer-mode magit evil-iedit-state iedit expand-region hungry-delete beacon cider clojure-mode elpy ace-popup-menu hydra powerline flycheck-coala flycheck mode-line ox-reveal spacemacs-theme color-theme auto-complete counsel ace-window org-bullets which-key try use-package))))
+    (company-tern xref-js2 kaolin-themes ample-theme json-mode yaml-mode smartparens rainbow-delimiters company-quickhelp toml-mode ocodo-svg-modelines flycheck-inline racer company-mode cargo cargo-mode flycheck-rust rust-mode rust tide typescript-mode merlin ocp-indent elm-mode go-mode ac-emacs-eclim-source eclimd eclim meghanada tern-auto-complete tern evil-surround rjsx-mode ghc-mode skewer-mode magit evil-iedit-state iedit expand-region hungry-delete beacon cider clojure-mode elpy ace-popup-menu hydra powerline flycheck-coala flycheck mode-line ox-reveal spacemacs-theme color-theme auto-complete counsel ace-window org-bullets which-key try use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
